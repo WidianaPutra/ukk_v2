@@ -1,54 +1,77 @@
 "use server";
 import { Student, Admin } from "@/generated/prisma";
-import { ServiceResultType } from "@/types/ServiceResult";
 import { prisma } from "@/utils/prisma";
 import { handleError } from "@/utils/handleError";
 import { generateToken } from "@/utils/jwt";
-import z from "zod";
+import { AuthResult } from "@/types/AuthResult";
+import bcrypt from "bcrypt";
 
-type StudnetLoginProps = {
-  req?: Request;
+type AuthLoginProps = {
   identifier: string;
-  password: number;
+  password: string;
 };
 
+async function LoginStudent(
+  nis: number,
+  password: string,
+): Promise<AuthResult> {
+  try {
+    const student = await prisma.student.findUnique({ where: { nis } });
+
+    if (!student) return { ok: false, error: "Invalid username or password" };
+
+    if (parseInt(password) !== student.nis)
+      return { ok: false, error: "Invalid username or password" };
+
+    const token = generateToken({ id: student.id, role: "student" });
+    return { ok: true, token };
+  } catch (err) {
+    return handleError(err, "lgoinStudent");
+  }
+}
+
+async function loginAdmin(
+  email: string,
+  password: string,
+): Promise<AuthResult> {
+  try {
+    const admin = await prisma.admin.findUnique({ where: { email } });
+
+    if (!admin) return { ok: false, error: "Invalid username or password" };
+    if (!(await bcrypt.compare(password, admin.password)))
+      return { ok: false, error: "Invalid username or password" };
+
+    const token = generateToken({ id: admin.id, role: "admin" });
+    return { ok: true, token };
+  } catch (err) {
+    return handleError(err, "lgoinStudent");
+  }
+}
+
 export async function loginAuth({
-  req,
   identifier,
   password,
-}: StudnetLoginProps): Promise<ServiceResultType<Student>> {
+}: AuthLoginProps): Promise<AuthResult> {
   try {
-    const isStudent = identifier.startsWith("student");
-    const isTeacher = identifier.startsWith("teacher");
-    if (isStudent) {
-      const studentNis = identifier.split("-")[1];
-      if (typeof password === "number" && parseInt(studentNis) === password)
+    if (identifier.startsWith("student-")) {
+      const nis = Number(identifier.split("-")[1]);
+
+      if (typeof password !== "number") {
         return { ok: false, error: "Invalid username or password" };
-
-      const data = await prisma.student.findUnique({
-        where: { nis: parseInt(studentNis) },
-      });
-
-      if (!data || !data.id)
-        return { ok: false, error: "Invalid username or password" };
-
-      const jwt = generateToken({ id: data.id, role: "student" });
-
-      return { ok: true, data: jwt };
-    }
-
-    if (isTeacher) {
-      const teacherSchema = z.object({
-        teacherEmail: z.email(""),
-        password: z.string().min(8, "Password must be more then 7 characters"),
-      });
-      const teacherEmail = identifier.split("-")[1];
-      const teacherParse = teacherSchema.safeParse({ teacherEmail, password });
-
-      if (!teacherParse.success) {
-        return { ok: false, error: "" };
       }
+
+      return LoginStudent(nis, password);
     }
+
+    if (identifier.startsWith("admin-")) {
+      if (typeof password !== "string") {
+        return { ok: false, error: "Invalid username or password" };
+      }
+      const email = identifier.split("-")[1];
+      return loginAdmin(email, password);
+    }
+
+    return { ok: false, error: "Invalid format identifier" };
   } catch (err) {
     return handleError(err, "studentLogin");
   }
