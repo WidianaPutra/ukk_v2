@@ -3,7 +3,7 @@ import { env } from "@/config/env";
 
 export const generateToken = (payload: {
   id: string;
-  role: "student" | "role";
+  role: "student" | "admin";
 }) => {
   return jwt.sign(payload, env?.JWT_SECRET, { expiresIn: "1d" });
 };
