@@ -24,7 +24,8 @@ model Student {
 model Admin {
   id       String   @id @default(cuid())
   name     String
-  mail     String
+  email    String
+  password String
   phone    String
   birthday DateTime
 
@@ -38,6 +39,7 @@ model Report {
   id      String @id @default(cuid())
   message String
   status  Status
+  image   String
 
   studentId  String
   categoryId Int
