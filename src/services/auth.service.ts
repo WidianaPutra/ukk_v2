@@ -3,7 +3,7 @@ import { Student, Admin } from "@/generated/prisma";
 import { prisma } from "@/utils/prisma";
 import { handleError } from "@/utils/handleError";
 import { generateToken } from "@/utils/jwt";
-import { AuthResult } from "@/types/AuthResult";
+import { AuthServiceResult } from "@/types/ServiceResult";
 import bcrypt from "bcrypt";
 
 type AuthLoginProps = {
@@ -14,7 +14,7 @@ type AuthLoginProps = {
 async function LoginStudent(
   nis: number,
   password: string,
-): Promise<AuthResult> {
+): Promise<AuthServiceResult> {
   try {
     const student = await prisma.student.findUnique({ where: { nis } });
 
@@ -33,7 +33,7 @@ async function LoginStudent(
 async function loginAdmin(
   email: string,
   password: string,
-): Promise<AuthResult> {
+): Promise<AuthServiceResult> {
   try {
     const admin = await prisma.admin.findUnique({ where: { email } });
 
@@ -51,7 +51,7 @@ async function loginAdmin(
 export async function loginAuth({
   identifier,
   password,
-}: AuthLoginProps): Promise<AuthResult> {
+}: AuthLoginProps): Promise<AuthServiceResult> {
   try {
     if (identifier.startsWith("student-")) {
       const nis = Number(identifier.split("-")[1]);

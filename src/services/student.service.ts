@@ -1,7 +1,7 @@
 "use server";
 import { prisma } from "@/utils/prisma";
 import { Student } from "@/generated/prisma";
-import { ServiceResultType } from "@/types/ServiceResult";
+import { GeneralServiceResult } from "@/types/ServiceResult";
 import { handleError } from "@/utils/handleError";
 
 export type ClearStudentData = Omit<Student, "createdAt" | "updatedAt" | "id">;
@@ -29,7 +29,7 @@ type DeleteStudentProps = {
 export async function getStudentById({
   id,
   report,
-}: GetStudentProps): Promise<ServiceResultType<Student>> {
+}: GetStudentProps): Promise<GeneralServiceResult<Student>> {
   try {
     const student = await prisma.student.findUnique({
       where: { id },
@@ -47,7 +47,7 @@ export async function getStudentById({
 export async function getAllStudent({
   key,
   value,
-}: GetAllStudentProps): Promise<ServiceResultType<Student>> {
+}: GetAllStudentProps): Promise<GeneralServiceResult<Student>> {
   try {
     const filter =
       key == "name"
@@ -69,7 +69,7 @@ export async function getAllStudent({
 
 export async function createStudentData(
   data: ClearStudentData,
-): Promise<ServiceResultType<Student>> {
+): Promise<GeneralServiceResult<Student>> {
   try {
     const student = await prisma.student.create({ data: data });
     if (!student) {
@@ -85,7 +85,7 @@ export async function createStudentData(
 export async function updateStudent({
   data,
   identifier,
-}: UpdateStudenProps): Promise<ServiceResultType<Student>> {
+}: UpdateStudenProps): Promise<GeneralServiceResult<Student>> {
   try {
     const student = await prisma.student.update({
       data,
@@ -105,7 +105,7 @@ export async function updateStudent({
 export async function deleteStudent({
   key,
   value,
-}: DeleteStudentProps): Promise<ServiceResultType<Student>> {
+}: DeleteStudentProps): Promise<GeneralServiceResult<Student>> {
   try {
     const filters =
       key == "id" ? { id: String(value) } : { nis: Number(value) };

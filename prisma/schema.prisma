@@ -38,7 +38,7 @@ model Admin {
 model Report {
   id      String @id @default(cuid())
   message String
-  status  Status
+  status  Status @default(WAITING)
   image   String
 
   studentId  String
